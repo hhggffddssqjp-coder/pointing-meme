@@ -96,6 +96,9 @@ function drawAvatar(g: CanvasRenderingContext2D, p: Person, cx: number, cy: numb
   g.closePath();
   if (p.image) {
     g.clip();
+    // 小頭貼放大時用比較平滑的插值，減少鋸齒和馬賽克感
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
     g.drawImage(p.image, cx - D / 2, cy - D / 2, D, D);
   } else {
     g.fillStyle = PLACEHOLDER_BG;

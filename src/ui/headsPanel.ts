@@ -1,14 +1,26 @@
 /** 第 2 區：頭的位置清單（放大、縮小、問號左右、刪除）與標記開關 */
-import { formatName } from '../render';
+import { pixelWidth } from '../image';
+import { formatName, outputSize } from '../render';
 import { emit, on, state } from '../state';
 import { HEAD_SCALE_MAX, HEAD_SCALE_MIN, HEAD_SCALE_STEP } from '../templates';
 import { askConfirm } from './dialog';
 import { $, button, el, emptyItem } from './dom';
 
+/** 頭貼的像素連輸出大小的一半都不到，放大後就會明顯糊掉 */
+const BLURRY_RATIO = 0.5;
+
 function label(i: number): string {
   const p = state.people[i];
   if (!p) return '空著';
   return formatName(p.name, true) || '（沒填帳號）';
+}
+
+function isBlurry(i: number): boolean {
+  const p = state.people[i];
+  if (!p?.image || !state.base) return false;
+  const outW = outputSize(state.base.width, state.base.height).width;
+  const needed = (state.size / 100) * outW * state.heads[i].scale;
+  return pixelWidth(p.image) < needed * BLURRY_RATIO;
 }
 
 function render(): void {
@@ -30,7 +42,19 @@ function render(): void {
         'div',
         { className: 'item' },
         el('span', { className: 'n', text: String(n) }),
-        el('span', { className: 'grow', text: label(i) + scale }),
+        el(
+          'span',
+          { className: 'grow', text: label(i) + scale },
+          ...(isBlurry(i)
+            ? [
+                el('span', {
+                  className: 'tag warn',
+                  text: '頭貼太小，會糊',
+                  attrs: { title: '換一張頭貼比較大的截圖（例如放大網頁後再截），或把這個位置縮小' },
+                }),
+              ]
+            : []),
+        ),
         el(
           'span',
           { className: 'actions-inline' },
@@ -72,6 +96,6 @@ export function initHeadsPanel(): void {
     emit('heads');
   });
 
-  on(['heads', 'people', 'names', 'base'], render);
+  on(['heads', 'people', 'names', 'base', 'style'], render);
   render();
 }

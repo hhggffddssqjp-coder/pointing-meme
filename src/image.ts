@@ -21,6 +21,13 @@ export async function loadImageFromBlob(blob: Blob): Promise<{ image: HTMLImageE
   }
 }
 
+/** 圖片的實際像素寬度（img 用原始寬度，canvas、ImageBitmap 用 width） */
+export function pixelWidth(src: CanvasImageSource): number {
+  if (src instanceof HTMLImageElement) return src.naturalWidth;
+  if ('width' in src && typeof src.width === 'number') return src.width;
+  return 0;
+}
+
 export function createCanvas(width: number, height: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = Math.max(1, Math.round(width));

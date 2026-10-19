@@ -59,6 +59,8 @@ export interface RosterItem {
   createdAt: number;
   /** 頭貼指紋，用來判斷重複 */
   hash?: string;
+  /** 頭貼邊長（px） */
+  size?: number;
 }
 
 export interface StyleOptions {

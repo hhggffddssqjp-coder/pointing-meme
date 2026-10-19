@@ -1,10 +1,11 @@
-/** 名單儲存：貼過的人存在 IndexedDB，頭貼縮成 200px */
+/** 名單儲存：貼過的人存在 IndexedDB，頭貼最大存 512px */
 import { avatarHash, resizeSquare } from './avatar';
 import * as db from './db';
-import { canvasToBlob, loadImage } from './image';
+import { canvasToBlob, loadImage, pixelWidth } from './image';
 import type { RosterItem } from './types';
 
-export const ROSTER_AVATAR_SIZE = 200;
+/** 名單裡頭貼的最大邊長；比這小的頭貼照原尺寸存，不放大 */
+export const ROSTER_AVATAR_MAX = 512;
 
 interface StoredRosterItem {
   id: string;
@@ -14,11 +15,15 @@ interface StoredRosterItem {
   updatedAt: number;
 }
 
-function toItem(r: StoredRosterItem, hash?: string): RosterItem {
-  return { id: r.id, name: r.name, avatar: r.avatar, url: URL.createObjectURL(r.avatar), createdAt: r.createdAt, hash };
+function toRecord(item: RosterItem): StoredRosterItem {
+  return { id: item.id, name: item.name, avatar: item.avatar, createdAt: item.createdAt, updatedAt: Date.now() };
 }
 
-/** 讀名單時順便算每個頭貼的指紋（200px 的小圖，很快） */
+function toItem(r: StoredRosterItem, hash?: string, size?: number): RosterItem {
+  return { id: r.id, name: r.name, avatar: r.avatar, url: URL.createObjectURL(r.avatar), createdAt: r.createdAt, hash, size };
+}
+
+/** 讀名單時順便算每個頭貼的指紋和尺寸 */
 export async function loadRoster(): Promise<RosterItem[]> {
   const rows = await db.getAll<StoredRosterItem>('roster');
   rows.sort((a, b) => a.createdAt - b.createdAt);
@@ -26,7 +31,9 @@ export async function loadRoster(): Promise<RosterItem[]> {
     rows.map(async (r) => {
       const item = toItem(r);
       try {
-        item.hash = avatarHash(await loadImage(item.url));
+        const img = await loadImage(item.url);
+        item.hash = avatarHash(img);
+        item.size = img.naturalWidth;
       } catch {
         /* 壞掉的圖就不參與重複判斷 */
       }
@@ -35,27 +42,38 @@ export async function loadRoster(): Promise<RosterItem[]> {
   );
 }
 
-/** 把頭貼縮成名單用的大小，輸出 PNG */
-export function makeRosterAvatar(avatar: CanvasImageSource): Promise<Blob> {
-  return canvasToBlob(resizeSquare(avatar, ROSTER_AVATAR_SIZE), 'image/png');
+/** 把頭貼轉成名單用的 PNG：超過 ROSTER_AVATAR_MAX 才縮小 */
+export function makeRosterAvatar(avatar: CanvasImageSource): Promise<{ blob: Blob; size: number }> {
+  const size = Math.max(1, Math.min(ROSTER_AVATAR_MAX, pixelWidth(avatar)));
+  return canvasToBlob(resizeSquare(avatar, size), 'image/png').then((blob) => ({ blob, size }));
 }
 
-export async function addToRoster(avatar: Blob, name = '', hash?: string): Promise<RosterItem> {
+export async function addToRoster(avatar: Blob, size: number, name = '', hash?: string): Promise<RosterItem> {
   const now = Date.now();
   const record: StoredRosterItem = { id: db.newId(), name, avatar, createdAt: now, updatedAt: now };
   await db.put('roster', record);
-  return toItem(record, hash);
+  return toItem(record, hash, size);
 }
 
 export async function renameRosterItem(item: RosterItem, name: string): Promise<void> {
   item.name = name;
-  await db.put<StoredRosterItem>('roster', {
-    id: item.id,
-    name,
-    avatar: item.avatar,
-    createdAt: item.createdAt,
-    updatedAt: Date.now(),
-  });
+  await db.put('roster', toRecord(item));
+}
+
+/** 換成比較清楚的頭貼（同一個人、解析度更高的截圖） */
+export async function replaceRosterAvatar(item: RosterItem, avatar: Blob, size: number, hash: string): Promise<void> {
+  const prev = { avatar: item.avatar, url: item.url, size: item.size, hash: item.hash };
+  item.avatar = avatar;
+  item.size = size;
+  item.hash = hash;
+  try {
+    await db.put('roster', toRecord(item));
+  } catch (err) {
+    Object.assign(item, prev);
+    throw err;
+  }
+  item.url = URL.createObjectURL(avatar);
+  URL.revokeObjectURL(prev.url);
 }
 
 export async function removeFromRoster(items: RosterItem[]): Promise<void> {

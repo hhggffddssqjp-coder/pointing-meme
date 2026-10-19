@@ -1,7 +1,7 @@
 /** 第 3 區：留言的人（上傳／貼上截圖、填帳號、上移、刪除、打亂） */
 import { avatarHash, extractAvatars, isSameAvatar } from '../avatar';
-import { loadImageFromBlob } from '../image';
-import { addToRoster, makeRosterAvatar, renameRosterItem } from '../roster';
+import { loadImageFromBlob, pixelWidth } from '../image';
+import { addToRoster, makeRosterAvatar, renameRosterItem, replaceRosterAvatar } from '../roster';
 import { emit, on, state } from '../state';
 import type { Person } from '../types';
 import { $, button, el, emptyItem, setStatus } from './dom';
@@ -27,6 +27,7 @@ async function addFromFiles(files: File[]): Promise<void> {
   let broken = 0;
   let dupes = 0;
   let fromRoster = 0;
+  let sharper = 0;
   for (const f of images) {
     let avatars: HTMLCanvasElement[];
     try {
@@ -39,22 +40,43 @@ async function addFromFiles(files: File[]): Promise<void> {
     }
     for (const avatar of avatars) {
       const hash = avatarHash(avatar);
-      // 圖上已經有這個人：略過
-      if (state.people.some((p) => isSameAvatar(p.hash, hash))) {
+      const known = state.roster.find((r) => isSameAvatar(r.hash, hash));
+      let upgraded = false;
+      // 新截圖比名單裡存的清楚，就換成新的
+      if (known && avatar.width > (known.size ?? 0)) {
+        try {
+          const stored = await makeRosterAvatar(avatar);
+          if (stored.size > (known.size ?? 0)) {
+            await replaceRosterAvatar(known, stored.blob, stored.size, hash);
+            upgraded = true;
+          }
+        } catch {
+          /* 換不了就沿用舊的 */
+        }
+      }
+      // 圖上已經有這個人：不重複加入，但比較清楚的話換成新的頭貼
+      const existing = state.people.find((p) => isSameAvatar(p.hash, hash));
+      if (existing) {
+        if (!existing.image || avatar.width > pixelWidth(existing.image)) {
+          existing.image = avatar;
+          existing.hash = hash;
+          upgraded = true;
+        }
+        if (upgraded) sharper++;
         dupes++;
         continue;
       }
-      const small = await makeRosterAvatar(avatar);
-      const person = createPerson({ name: '', image: avatar, thumb: URL.createObjectURL(small), hash });
+      const stored = await makeRosterAvatar(avatar);
+      const person = createPerson({ name: '', image: avatar, thumb: URL.createObjectURL(stored.blob), hash });
       // 常用名單裡已經有這個人：沿用那筆（帳號也一起帶進來），不另存一筆
-      const known = state.roster.find((r) => isSameAvatar(r.hash, hash));
       if (known) {
         person.name = known.name;
         person.rosterId = known.id;
         fromRoster++;
+        if (upgraded) sharper++;
       } else {
         try {
-          const item = await addToRoster(small, '', hash);
+          const item = await addToRoster(stored.blob, stored.size, '', hash);
           state.roster.push(item);
           person.rosterId = item.id;
           saved++;
@@ -66,10 +88,14 @@ async function addFromFiles(files: File[]): Promise<void> {
       added++;
     }
   }
-  const dupeText = dupes ? `略過 ${dupes} 個圖上已經有的重複頭貼。` : '';
+  const dupeText =
+    (dupes ? `略過 ${dupes} 個圖上已經有的重複頭貼。` : '') +
+    (sharper ? `有 ${sharper} 個頭貼換成了比較清楚的版本。` : '');
   if (!added) {
-    if (dupes) setStatus(dupeText);
-    else setStatus('這些圖片打不開，請換一張試試。', 'error');
+    if (dupes) {
+      if (sharper) emit('people', 'roster');
+      setStatus(dupeText);
+    } else setStatus('這些圖片打不開，請換一張試試。', 'error');
     return;
   }
   emit('people', 'roster');

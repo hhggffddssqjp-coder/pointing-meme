@@ -596,3 +596,9 @@ button.danger:hover:not(:disabled) {
     transition: none !important;
   }
 }
+
+.tag.warn {
+  margin-left: 6px;
+  color: #3a2a00;
+  background: #ffd257;
+}
