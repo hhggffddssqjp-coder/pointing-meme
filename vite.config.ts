@@ -4,8 +4,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   base: './',
   server: {
-    // Artifact 版的輸出不用監看（OneDrive 同步時鎖檔會讓監看當掉）
-    watch: { ignored: ['**/dist-artifact/**'] },
+    // 專案放在 OneDrive 裡，同步時會鎖住剛新增的檔案，原生監看會因此當掉，改用輪詢
+    watch: { usePolling: true, interval: 300, ignored: ['**/dist-artifact/**'] },
   },
   build: {
     outDir: 'dist',
