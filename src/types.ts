@@ -45,6 +45,8 @@ export interface Person {
   thumb: string | null;
   /** 對應的常用名單項目 */
   rosterId?: string;
+  /** 頭貼指紋，用來判斷重複 */
+  hash?: string;
 }
 
 /** 常用名單裡的一個人 */
@@ -55,6 +57,8 @@ export interface RosterItem {
   /** avatar 的 object URL */
   url: string;
   createdAt: number;
+  /** 頭貼指紋，用來判斷重複 */
+  hash?: string;
 }
 
 export interface StyleOptions {

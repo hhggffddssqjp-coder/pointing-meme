@@ -1,5 +1,5 @@
 /** 第 3 區：留言的人（上傳／貼上截圖、填帳號、上移、刪除、打亂） */
-import { extractAvatars } from '../avatar';
+import { avatarHash, extractAvatars, isSameAvatar } from '../avatar';
 import { loadImageFromBlob } from '../image';
 import { addToRoster, makeRosterAvatar, renameRosterItem } from '../roster';
 import { emit, on, state } from '../state';
@@ -25,6 +25,8 @@ async function addFromFiles(files: File[]): Promise<void> {
   let added = 0;
   let saved = 0;
   let broken = 0;
+  let dupes = 0;
+  let fromRoster = 0;
   for (const f of images) {
     let avatars: HTMLCanvasElement[];
     try {
@@ -36,28 +38,47 @@ async function addFromFiles(files: File[]): Promise<void> {
       continue;
     }
     for (const avatar of avatars) {
+      const hash = avatarHash(avatar);
+      // 圖上已經有這個人：略過
+      if (state.people.some((p) => isSameAvatar(p.hash, hash))) {
+        dupes++;
+        continue;
+      }
       const small = await makeRosterAvatar(avatar);
-      const person = createPerson({ name: '', image: avatar, thumb: URL.createObjectURL(small) });
-      try {
-        const item = await addToRoster(small);
-        state.roster.push(item);
-        person.rosterId = item.id;
-        saved++;
-      } catch {
-        /* 名單存不進去不影響這次使用 */
+      const person = createPerson({ name: '', image: avatar, thumb: URL.createObjectURL(small), hash });
+      // 常用名單裡已經有這個人：沿用那筆（帳號也一起帶進來），不另存一筆
+      const known = state.roster.find((r) => isSameAvatar(r.hash, hash));
+      if (known) {
+        person.name = known.name;
+        person.rosterId = known.id;
+        fromRoster++;
+      } else {
+        try {
+          const item = await addToRoster(small, '', hash);
+          state.roster.push(item);
+          person.rosterId = item.id;
+          saved++;
+        } catch {
+          /* 名單存不進去不影響這次使用 */
+        }
       }
       state.people.push(person);
       added++;
     }
   }
+  const dupeText = dupes ? `略過 ${dupes} 個圖上已經有的重複頭貼。` : '';
   if (!added) {
-    setStatus('這些圖片打不開，請換一張試試。', 'error');
+    if (dupes) setStatus(dupeText);
+    else setStatus('這些圖片打不開，請換一張試試。', 'error');
     return;
   }
   emit('people', 'roster');
   setStatus(
-    `從 ${images.length - broken} 張圖加入了 ${added} 個頭貼，記得填帳號。` +
-      (saved < added ? '（有些沒能存進常用名單）' : '') +
+    `從 ${images.length - broken} 張圖加入了 ${added} 個頭貼` +
+      (fromRoster ? `（其中 ${fromRoster} 個是常用名單裡的人，帳號已帶入）` : '') +
+      '。' +
+      dupeText +
+      (saved + fromRoster < added ? '有些沒能存進常用名單。' : '') +
       (broken ? `另有 ${broken} 張打不開。` : ''),
   );
 }

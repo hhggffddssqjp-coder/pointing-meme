@@ -100,7 +100,13 @@ async function addChecked(): Promise<void> {
     try {
       const image = await loadImage(item.url);
       state.people.push(
-        createPerson({ name: item.name, image, thumb: URL.createObjectURL(item.avatar), rosterId: item.id }),
+        createPerson({
+          name: item.name,
+          image,
+          thumb: URL.createObjectURL(item.avatar),
+          rosterId: item.id,
+          hash: item.hash,
+        }),
       );
       added++;
     } catch {

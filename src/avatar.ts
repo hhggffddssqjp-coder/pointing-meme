@@ -224,6 +224,42 @@ export function extractAvatar(img: HTMLImageElement): HTMLCanvasElement {
   return extractAvatars(img)[0];
 }
 
+/* ---------- 重複判斷 ---------- */
+
+/** 縮圖的邊長，和每個顏色值平均差多少以內算同一張（0~255） */
+const THUMB = 8;
+const SAME_AVATAR_DIFF = 16;
+
+/**
+ * 頭貼指紋：把中間 70% 縮成 8×8 的彩色縮圖，存成十六進位字串。
+ * 避開四個角落是為了不受截圖背景色影響；
+ * 縮到 8×8 之後，同一個頭貼在不同大小的截圖裡會幾乎一樣，
+ * 而不同的頭貼（構圖或顏色不同）會差很多。
+ */
+export function avatarHash(src: CanvasImageSource & { width: number; height: number }): string {
+  const c = createCanvas(THUMB, THUMB);
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.imageSmoothingQuality = 'high';
+  const w = src.width;
+  const h = src.height;
+  g.drawImage(src, w * 0.15, h * 0.15, w * 0.7, h * 0.7, 0, 0, THUMB, THUMB);
+  const d = g.getImageData(0, 0, THUMB, THUMB).data;
+  let hex = '';
+  for (let i = 0; i < d.length; i += 4) {
+    for (let k = 0; k < 3; k++) hex += d[i + k].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+const HASH_LEN = THUMB * THUMB * 3 * 2;
+
+export function isSameAvatar(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b || a.length !== HASH_LEN || b.length !== HASH_LEN) return false;
+  let sum = 0;
+  for (let i = 0; i < HASH_LEN; i += 2) sum += Math.abs(parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16));
+  return sum / (HASH_LEN / 2) <= SAME_AVATAR_DIFF;
+}
+
 /** 把正方形頭貼縮放成 size × size */
 export function resizeSquare(src: CanvasImageSource, size: number): HTMLCanvasElement {
   const c = createCanvas(size, size);
