@@ -77,7 +77,7 @@ npm run build
 
 輸出在 `dist/`，是純靜態檔案，整個資料夾丟到任何靜態主機就能用：
 
-- **GitHub Pages**：把 `dist/` 推到 `gh-pages` 分支，或用 GitHub Actions 部署 `dist/`
+- **GitHub Pages**（已設定好）：`.github/workflows/deploy.yml` 會在每次推到 `main` 時自動 build 並部署。第一次要到 repo 的 Settings → Pages，把 Source 設成「GitHub Actions」
 - **Netlify / Vercel / Cloudflare Pages**：建置指令填 `npm run build`，輸出目錄填 `dist`
 - **自己的主機**：把 `dist/` 的內容上傳到網站目錄
 
