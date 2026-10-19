@@ -478,6 +478,81 @@ output {
   box-shadow: 6px 6px 0 var(--ink);
 }
 
+.image-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(10, 12, 30, 0.88);
+}
+
+.image-overlay img {
+  max-width: 100%;
+  max-height: 75vh;
+  border: 3px solid #fff;
+}
+
+.image-overlay p {
+  margin: 0;
+  color: #fff;
+}
+
+/* ---------- 對話框 ---------- */
+
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 18px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.dialog::backdrop {
+  background: rgba(10, 12, 30, 0.6);
+}
+
+.dialog p {
+  margin: 0 0 16px;
+}
+
+.dialog-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.dialog input[type='text'] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--ink);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button.confirm,
+button.danger {
+  color: #fff;
+  background: var(--red);
+}
+
+button.confirm:hover:not(:disabled),
+button.danger:hover:not(:disabled) {
+  background: var(--red);
+  filter: brightness(1.06);
+}
+
 /* ---------- 手機 ---------- */
 
 @media (max-width: 900px) {

@@ -83,6 +83,14 @@ npm run build
 
 `vite.config.ts` 設了 `base: './'`，所以放在子路徑（例如 `https://example.com/meme/`）也能正常運作。
 
+### Claude Artifact 版
+
+```bash
+npm run build:artifact
+```
+
+會在 `dist-artifact/` 產生可以發布成 Claude Artifact 的版本：CSS 和 JS 內嵌進頁面，`templates.json` 只保留圖片存在的底圖。在 Artifact 裡下載 PNG 走 Artifact 的 `downloads` 功能，無法使用時會改成顯示圖片讓人長按或右鍵另存。
+
 本機預覽建置結果：
 
 ```bash

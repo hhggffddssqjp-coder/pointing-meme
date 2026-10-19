@@ -12,6 +12,7 @@ import {
   updateUserTemplate,
 } from '../templates';
 import type { BaseImage, Head, Template } from '../types';
+import { askConfirm, askText } from './dialog';
 import { $, el, setStatus } from './dom';
 import { setEmptyMessage } from './stage';
 
@@ -105,7 +106,7 @@ async function onUpload(file: File): Promise<void> {
 async function onSave(): Promise<void> {
   const base = state.base;
   if (!base) return;
-  const name = prompt('底圖名稱', `${state.heads.length} 人版`)?.trim();
+  const name = await askText('底圖名稱', `${state.heads.length} 人版`);
   if (!name) return;
   try {
     setStatus('儲存中…');
@@ -139,7 +140,7 @@ async function onUpdate(): Promise<void> {
 async function onDelete(): Promise<void> {
   const t = activeTemplate();
   if (!t || t.source !== 'user') return;
-  if (!confirm(`要從選單刪除「${t.name}」嗎？`)) return;
+  if (!(await askConfirm(`要從選單刪除「${t.name}」嗎？`, '刪除'))) return;
   try {
     await deleteUserTemplate(t);
     state.templates = state.templates.filter((x) => x !== t);

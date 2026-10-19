@@ -3,6 +3,7 @@ import { loadImage } from '../image';
 import { loadRoster, removeFromRoster, renameRosterItem } from '../roster';
 import { emit, on, state } from '../state';
 import type { RosterItem } from '../types';
+import { askConfirm } from './dialog';
 import { $, el, emptyItem, setStatus } from './dom';
 import { createPerson } from './peoplePanel';
 
@@ -113,7 +114,11 @@ async function addChecked(): Promise<void> {
 
 async function deleteChecked(): Promise<void> {
   const items = state.roster.filter((r) => checked.has(r.id));
-  if (!items.length || !confirm(`要從常用名單刪除 ${items.length} 人嗎？（已經在圖上的不受影響）`)) return;
+  if (
+    !items.length ||
+    !(await askConfirm(`要從常用名單刪除 ${items.length} 人嗎？（已經在圖上的不受影響）`, '刪除'))
+  )
+    return;
   try {
     await removeFromRoster(items);
   } catch {

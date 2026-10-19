@@ -2,6 +2,7 @@
 import { formatName } from '../render';
 import { emit, on, state } from '../state';
 import { HEAD_SCALE_MAX, HEAD_SCALE_MIN, HEAD_SCALE_STEP } from '../templates';
+import { askConfirm } from './dialog';
 import { $, button, el, emptyItem } from './dom';
 
 function label(i: number): string {
@@ -65,8 +66,8 @@ export function initHeadsPanel(): void {
     emit('style');
   });
 
-  $('clearHeads').addEventListener('click', () => {
-    if (!state.heads.length || !confirm('要清除全部位置嗎？')) return;
+  $('clearHeads').addEventListener('click', async () => {
+    if (!state.heads.length || !(await askConfirm('要清除全部位置嗎？', '清除'))) return;
     state.heads = [];
     emit('heads');
   });
