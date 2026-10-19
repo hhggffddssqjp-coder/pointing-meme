@@ -1,0 +1,7 @@
+node_modules
+dist
+*.local
+.claude
+
+# 舊版單檔，只留在本機對照
+互指梗圖產生器.html

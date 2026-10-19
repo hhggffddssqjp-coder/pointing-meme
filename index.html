@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="貼上 Threads 留言截圖，自動裁出頭貼、蓋到互指梗圖上，加上問號和帳號。" />
+    <meta name="color-scheme" content="light dark" />
+    <title>互指梗圖產生器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👉</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap"
+    />
+    <script>
+      // 在畫面出現前套用主題，避免閃一下
+      try {
+        var t = JSON.parse(localStorage.getItem('pointing-meme:theme'));
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>互指梗圖<span>產生器</span></h1>
+        <p>選一張互指梗圖，貼上 Threads 留言截圖，自動裁出頭貼蓋到每個人頭上，再加上問號和帳號。</p>
+      </div>
+      <button id="themeToggle" class="small" type="button">主題：自動</button>
+    </header>
+
+    <main>
+      <div class="stage">
+        <div class="empty" id="empty">
+          <strong id="emptyTitle">載入底圖中…</strong>
+          <span id="emptyText"></span>
+        </div>
+        <canvas id="canvas" hidden aria-label="梗圖預覽，點一下新增頭的位置，拖曳可以移動"></canvas>
+        <p class="hint" id="hint" hidden>點圖上空白處新增頭的位置，拖曳可以移動。</p>
+      </div>
+
+      <div class="panel">
+        <section>
+          <h2><b>1</b>梗圖底圖</h2>
+          <label class="field">
+            <span class="visually-hidden">選擇底圖</span>
+            <select id="templateSelect"></select>
+          </label>
+          <div class="row">
+            <label class="btn">上傳其他底圖<input type="file" id="baseFile" accept="image/*" /></label>
+            <button type="button" id="saveTemplate" disabled>存進選單</button>
+            <button type="button" id="updateTemplate" hidden>更新位置</button>
+            <button type="button" id="deleteTemplate" hidden>刪除這張</button>
+          </div>
+          <p class="note">
+            上傳新底圖、點好位置後按「存進選單」，下次就能直接選。上傳的圖和內建底圖長寬比一樣時，會自動放好位置。
+          </p>
+        </section>
+
+        <section>
+          <h2><b>2</b>頭的位置</h2>
+          <p class="sub">在圖上點每個人的臉新增位置，拖曳可以移動。頭貼會依編號順序蓋上去。</p>
+          <label class="opt"><input type="checkbox" id="showMarks" /> 顯示位置標記（下載時不會畫出來）</label>
+          <div class="list" id="headList"></div>
+          <div class="row mt"><button type="button" class="small" id="clearHeads">清除全部位置</button></div>
+        </section>
+
+        <section>
+          <h2><b>3</b>留言的人</h2>
+          <p class="sub">
+            上傳、貼上（Ctrl+V）或直接把截圖拖進網頁。一張長截圖裡有很多則留言也可以，會把每個人的圓形頭貼都裁出來；已經裁好的方形頭貼也行。帳號請自己填。
+          </p>
+          <div class="row">
+            <label class="btn">加入截圖<input type="file" id="peopleFiles" accept="image/*" multiple /></label>
+            <button type="button" id="addBlank">只加帳號</button>
+            <button type="button" id="shuffle">打亂順序</button>
+          </div>
+          <div class="list" id="peopleList"></div>
+        </section>
+
+        <section>
+          <h2><b>4</b>常用名單 <small id="rosterCount"></small></h2>
+          <p class="sub">貼過的人會自動存在這個瀏覽器裡，下次勾選就能直接加入。</p>
+          <div class="row">
+            <button type="button" class="small" id="rosterAll">全選</button>
+            <button type="button" class="small" id="rosterNone">全不選</button>
+            <button type="button" class="small" id="rosterDelete">從名單刪除</button>
+          </div>
+          <div class="list roster" id="rosterList"></div>
+          <div class="row mt"><button type="button" id="rosterAdd" disabled>加入勾選的人</button></div>
+        </section>
+
+        <section>
+          <h2><b>5</b>樣式</h2>
+          <label class="opt">
+            頭貼大小
+            <input type="range" id="size" min="3" max="25" step="0.5" />
+            <output id="sizeValue" for="size"></output>
+          </label>
+          <label class="opt"><input type="checkbox" id="showQuestion" /> 頭旁邊加問號</label>
+          <label class="opt indent">
+            問號顏色
+            <select id="questionColor">
+              <option value="#ffffff">白色</option>
+              <option value="#ffe600">黃色</option>
+              <option value="#ff3b30">紅色</option>
+            </select>
+          </label>
+          <label class="opt"><input type="checkbox" id="showName" /> 頭貼下面加帳號</label>
+          <label class="opt indent"><input type="checkbox" id="withAt" /> 帳號前面加 @</label>
+        </section>
+
+        <div class="actions">
+          <button type="button" class="primary" id="download" disabled>下載梗圖 PNG</button>
+          <p class="summary" id="summary"></p>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+
+    <div class="drop-overlay" id="dropOverlay" hidden>
+      <p>放開來加入截圖</p>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

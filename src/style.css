@@ -1,0 +1,523 @@
+:root {
+  --paper: #eef0fb;
+  --panel: #ffffff;
+  --ink: #1d1f3a;
+  --muted: #5d6285;
+  --red: #d93a2b;
+  --blue: #2c56c9;
+  --line: #c9cdea;
+  --stage: #5e68b0;
+  --field: #f6f7fd;
+  --error: #b42318;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #161830;
+    --panel: #20233f;
+    --ink: #eceeff;
+    --muted: #a3a8cf;
+    --red: #f05a48;
+    --blue: #6e8ff0;
+    --line: #3a3e66;
+    --stage: #2e3263;
+    --field: #191b34;
+    --error: #ff8a7a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #161830;
+  --panel: #20233f;
+  --ink: #eceeff;
+  --muted: #a3a8cf;
+  --red: #f05a48;
+  --blue: #6e8ff0;
+  --line: #3a3e66;
+  --stage: #2e3263;
+  --field: #191b34;
+  --error: #ff8a7a;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0)
+    env(safe-area-inset-left, 0);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 版面 ---------- */
+
+header.top {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 24px 8px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+h1 {
+  margin: 0;
+  font-weight: 900;
+  font-size: clamp(26px, 4vw, 38px);
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+
+h1 span {
+  display: inline-block;
+  margin-left: 0.15em;
+  padding: 0 0.3em;
+  background: var(--red);
+  color: #fff;
+  transform: rotate(-2deg);
+}
+
+header.top p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+
+.stage {
+  position: sticky;
+  top: 12px;
+  padding: 12px;
+  background: var(--stage);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: crosshair;
+  background: var(--field);
+}
+
+.empty {
+  min-height: 340px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  text-align: center;
+}
+
+.empty strong {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.hint {
+  margin: 8px 2px 0;
+  color: #fff;
+  font-size: 13px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+section {
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+}
+
+section h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+section h2 b {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--panel);
+  font-size: 13px;
+}
+
+section h2 small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 13px;
+}
+
+p.sub {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.mt {
+  margin-top: 10px;
+}
+
+/* ---------- 控制項 ---------- */
+
+button,
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+.btn:hover {
+  background: var(--field);
+}
+
+button:focus-visible,
+.btn:focus-within,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.small {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+button.primary {
+  width: 100%;
+  justify-content: center;
+  padding: 10px 16px;
+  font-size: 16px;
+  color: #fff;
+  background: var(--red);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--red);
+  filter: brightness(1.06);
+}
+
+button.primary:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+select,
+input[type='text'] {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 5px 8px;
+}
+
+select:disabled,
+input:disabled {
+  opacity: 0.5;
+}
+
+.field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  font-weight: 700;
+  border: 2px solid var(--ink);
+}
+
+label.opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+label.opt.indent {
+  padding-left: 24px;
+}
+
+input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--red);
+}
+
+input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--red);
+}
+
+output {
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* ---------- 清單 ---------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: var(--field);
+  border: 1px solid var(--line);
+}
+
+.item .n {
+  width: 20px;
+  text-align: center;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.item img,
+.item .ph {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--ink);
+}
+
+.item .ph {
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.item input[type='text'] {
+  flex: 1;
+  min-width: 6em;
+}
+
+.item .grow {
+  flex: 1;
+  min-width: 6em;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.actions-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.roster {
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.roster-item {
+  flex-wrap: nowrap;
+  cursor: pointer;
+}
+
+.tag {
+  flex: none;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+}
+
+/* ---------- 下載與狀態 ---------- */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 1.3em;
+}
+
+.status {
+  min-height: 1.3em;
+  font-size: 13px;
+}
+
+.status[data-kind='error'] {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 12, 30, 0.75);
+  pointer-events: none;
+}
+
+.drop-overlay p {
+  margin: 0;
+  padding: 24px 32px;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px dashed var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+/* ---------- 手機 ---------- */
+
+@media (max-width: 900px) {
+  header.top {
+    padding: 16px 14px 4px;
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    padding: 12px 14px 32px;
+  }
+
+  .stage {
+    position: static;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  /* 下載按鈕固定在畫面底部，捲到哪裡都按得到 */
+  .actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -14px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0));
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+  }
+
+  button.small {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .empty {
+    min-height: 220px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
