@@ -136,13 +136,11 @@ function runs(values: number[], thr: number, maxGap: number): [number, number][]
 /**
  * 長截圖裡所有頭貼的範圍：
  * 1. 略過橫跨大半寬度的列（分隔線、整排圖片）
- * 2. 在左邊 30% 找最左邊的一段欄位，當作「頭貼欄」
+ * 2. 找最左邊一段夠密、夠寬的欄位，當作「頭貼欄」
  * 3. 在頭貼欄內逐列計算，每段夠寬的連續列就是一個頭貼（細的串連線會被濾掉）
  * 4. 只留接近正方形、大小和其他頭貼差不多的
  */
 function multiBoxes({ w, h, on }: Pixels): AvatarBox[] {
-  const stripW = Math.max(1, Math.round(w * 0.3));
-
   const skipRow = new Array<boolean>(h).fill(false);
   for (let y = 0; y < h; y++) {
     let n = 0;
@@ -150,16 +148,19 @@ function multiBoxes({ w, h, on }: Pixels): AvatarBox[] {
     skipRow[y] = n > w * 0.5;
   }
 
-  const col = new Array<number>(stripW).fill(0);
+  // 整張寬度都看（窄的手機截圖頭貼可能佔到一半寬），取最左邊、夠密也夠寬的一段欄位
+  const col = new Array<number>(w).fill(0);
   for (let y = 0; y < h; y++) {
     if (skipRow[y]) continue;
-    for (let x = 0; x < stripW; x++) if (on(x, y)) col[x]++;
+    for (let x = 0; x < w; x++) if (on(x, y)) col[x]++;
   }
-  const colRuns = runs(col, Math.max(4, h * 0.02), 2);
-  if (!colRuns.length) return [];
-  const [ax0, ax1] = colRuns[0];
+  const peak = Math.max(...col);
+  const minColW = Math.max(8, w * 0.04);
+  // 門檻跟著最密的欄位走，愛心圖示、細線這類稀疏的東西就不會被當成頭貼欄
+  const column = runs(col, Math.max(4, h * 0.02, peak * 0.15), 2).find(([a, b]) => b - a + 1 >= minColW);
+  if (!column) return [];
+  const [ax0, ax1] = column;
   const colW = ax1 - ax0 + 1;
-  if (colW < w * 0.04) return [];
 
   const rows = new Array<number>(h).fill(0);
   for (let y = 0; y < h; y++) {
